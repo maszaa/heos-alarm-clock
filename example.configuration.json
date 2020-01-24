@@ -1,0 +1,10 @@
+{
+  "cron": {
+    "alarm": "0 0 8 * * *"
+  },
+  "heos": {
+    "ipAddress": "xxx.yyy.z.vvv",
+    "playerId": 0,
+    "mediaUrl": "https://example.com/stream.mp3"
+  }
+}

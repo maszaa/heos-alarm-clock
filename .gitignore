@@ -1,2 +1,4 @@
 node_modules
 env.sh
+configuration.json
+loggers/*.js
