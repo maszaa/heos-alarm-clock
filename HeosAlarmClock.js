@@ -28,6 +28,11 @@ class HeosAlarmClock {
         source: this.constructor.name,
         message: `Failed to play media url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${JSON.stringify(response, null, 2)}`
       });
+    } else {
+      logger.info({
+        source: this.constructor.name,
+        message: `Successfully started playing url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})`
+      });
     }
   }
 
@@ -43,6 +48,11 @@ class HeosAlarmClock {
   }
 
   playMedia() {
+    logger.info({
+      source: this.constructor.name,
+      message: `Starting to play url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})`
+    });
+
     this.connection.write(
       COMMAND_GROUP,
       COMMAND,

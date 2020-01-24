@@ -12,11 +12,9 @@ function collectLoggers() {
   }
   const loggerPath = path.join(__dirname, 'loggers');
 
-  let logger;
-
   fs.readdirSync(loggerPath).forEach((file) => {
     if (file.split('.').pop() === 'js') {
-      logger = require(path.join(loggerPath, file));
+      const logger = require(path.join(loggerPath, file));
 
       if (logger) {
         if (logger.debug) loggers.debug.push(logger.debug);
@@ -32,10 +30,10 @@ function collectLoggers() {
 
 function initializeLogger(loggers) {
   return new Logger({
-    debug: (message) => loggers.debug.forEach((debug) => debug(message)),
-    info: (message) => loggers.info.forEach((info) => info(message)),
-    warning: (message) => loggers.warning.forEach((warning) => warning(message)),
-    error: (message) => loggers.error.forEach((error) => error(message)),
+    debug: (message) => Promise.all(loggers.debug.map((debug) => debug(message))),
+    info: (message) => Promise.all(loggers.info.map((info) => info(message))),
+    warning: (message) => Promise.all(loggers.warning.map((warning) => warning(message))),
+    error: (message) => Promise.all(loggers.error.map((error) => error(message))),
     timezone: process.env.TIMEZONE,
   });
 }

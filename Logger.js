@@ -14,7 +14,7 @@ class Logger {
   }
 
   _formatMessage({level, source, message}) {
-    return `[${moment().tz(this.timezone).toISOString(true)}. ${level.toUpperCase()}/${source}] ${message}`;
+    return `[${moment().tz(this.timezone).toISOString(true)}: ${level.toUpperCase()}/${source}] ${message}`;
   }
 
   debug({source, message}) {
