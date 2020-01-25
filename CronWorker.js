@@ -2,20 +2,20 @@ const CronJob = require('cron').CronJob;
 const loadJsonFile = require('load-json-file');
 
 const logger = require('./logging');
+const readConfigurationFile = require('./utils').readConfigurationFile;
 
 class CronWorker {
-  constructor({configurationCheckCrontab, configurationFile, alarmCallback}) {
+  constructor({configurationCheckCrontab, customName, customCallback}) {
     this.configurationCheckCrontab = configurationCheckCrontab;
-    this.configurationFile = configurationFile;
-    this.alarmCallback = alarmCallback;
+    this.customName = customName;
+    this.customCallback = customCallback;
     this.cronJobs = {
       configurationCheck: null,
-      alarm: null
+      [this.customName]: null
     };
 
     this._initializeConfigurationCheck = this._initializeConfigurationCheck.bind(this);
-    this._readConfiguration = this._readConfiguration.bind(this);
-    this._updateConfiguration = this._updateConfiguration.bind(this);
+    this._updateCustomConfiguration = this._updateCustomConfiguration.bind(this);
 
     this._initializeConfigurationCheck();
   }
@@ -25,7 +25,7 @@ class CronWorker {
       await this.cronJobs.configurationCheck.stop();
     }
 
-    this.cronJobs.configurationCheck = new CronJob(this.configurationCheckCrontab, this._updateConfiguration);
+    this.cronJobs.configurationCheck = new CronJob(this.configurationCheckCrontab, this._updateCustomConfiguration);
     this.cronJobs.configurationCheck.start();
     logger.info({
       source: this.constructor.name,
@@ -33,30 +33,26 @@ class CronWorker {
     });
   }
 
-  async _readConfiguration() {
-    return loadJsonFile(this.configurationFile);
-  }
+  async _updateCustomConfiguration() {
+    const configuration = await readConfigurationFile();
 
-  async _updateConfiguration() {
-    const configuration = await this._readConfiguration();
-
-    if (configuration && configuration.cron && configuration.cron.alarm) {
-      if (this.cronJobs.alarm && configuration.cron.alarm !== this.cronJobs.alarm.cronTime.source) {
+    if (configuration && configuration.cron && configuration.cron[this.customName]) {
+      if (this.cronJobs[this.customName] && configuration.cron[this.customName] !== this.cronJobs[this.customName].cronTime.source) {
         logger.warning({
           source: this.constructor.name,
-          message: `Alarm crontab changed (${configuration.cron.alarm} !== ${this.cronJobs.cronTime.source}), stopping previous alarm cronjob`
+          message: `${[this.customName]} crontab changed (${configuration.cron[this.customName]} !== ${this.cronJobs.cronTime.source}), stopping previous ${[this.customName]} cronjob`
         });
 
-        await this.cronJobs.alarm.stop();
-        delete this.cronJobs.alarm;
+        await this.cronJobs[this.customName].stop();
+        delete this.cronJobs[this.customName];
       }
-      if (!this.cronJobs.alarm) {
-        this.cronJobs.alarm = new CronJob(configuration.cron.alarm, this.alarmCallback);
-        this.cronJobs.alarm.start();
+      if (!this.cronJobs[this.customName]) {
+        this.cronJobs[this.customName] = new CronJob(configuration.cron[this.customName], this.customCallback);
+        this.cronJobs[this.customName].start();
 
         logger.info({
           source: this.constructor.name,
-          message: `Initialized alarm cronjob with crontab ${configuration.cron.alarm}`
+          message: `Initialized ${[this.customName]} cronjob with crontab ${configuration.cron[this.customName]}`
         });
       }
     }

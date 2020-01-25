@@ -28,14 +28,17 @@ function collectLoggers() {
   return loggers;
 }
 
-function initializeLogger(loggers) {
-  return new Logger({
-    debug: (message) => Promise.all(loggers.debug.map((debug) => debug(message))),
-    info: (message) => Promise.all(loggers.info.map((info) => info(message))),
-    warning: (message) => Promise.all(loggers.warning.map((warning) => warning(message))),
-    error: (message) => Promise.all(loggers.error.map((error) => error(message))),
-    timezone: process.env.TIMEZONE,
-  });
+const LOGGERS = collectLoggers();
+const LOGGER = {
+  debug: (message) => Promise.all(LOGGERS.debug.map((debug) => debug(message))),
+  info: (message) => Promise.all(LOGGERS.info.map((info) => info(message))),
+  warning: (message) => Promise.all(LOGGERS.warning.map((warning) => warning(message))),
+  error: (message) => Promise.all(LOGGERS.error.map((error) => error(message))),
+  timezone: process.env.TIMEZONE,
+};
+
+function initializeLogger() {
+  return new Logger(LOGGER);
 }
 
-module.exports = initializeLogger(collectLoggers());
+module.exports = initializeLogger();

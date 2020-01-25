@@ -6,14 +6,11 @@ const COMMAND_GROUP = 'browse';
 const COMMAND = 'play_stream';
 const SUCCESS_STRING = 'success';
 
-class HeosAlarmClock {
+class HeosMediaPlayer {
   constructor({ipAddress, playerId, mediaUrl}) {
     this.ipAddress = ipAddress
     this.playerId = playerId;
     this.mediaUrl = mediaUrl;
-    this.ready = false,
-
-    this.error = null;
     this.connection = null;
 
     this._handlePlayMedia = this._handlePlayMedia.bind(this);
@@ -21,17 +18,18 @@ class HeosAlarmClock {
   }
 
   async _handlePlayMedia(response) {
-    await this.connection.close();
+    this.connection && await this.connection.close();
+    const strResponse = JSON.stringify(response, null, 2);
 
-    if (response.heos.result.toLowerCase() !== SUCCESS_STRING) {
-      logger.error({
-        source: this.constructor.name,
-        message: `Failed to play media url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${JSON.stringify(response, null, 2)}`
-      });
-    } else {
+    if (response && response.heos && response.heos.result && response.heos.result.toLowerCase() === SUCCESS_STRING) {
       logger.info({
         source: this.constructor.name,
-        message: `Successfully started playing url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})`
+        message: `Successfully started playing url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`
+      });
+    } else {
+      logger.error({
+        source: this.constructor.name,
+        message: `Failed to play media url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`
       });
     }
   }
@@ -64,4 +62,4 @@ class HeosAlarmClock {
   }
 }
 
-module.exports = HeosAlarmClock;
+module.exports = HeosMediaPlayer;

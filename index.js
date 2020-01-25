@@ -1,19 +1,19 @@
-const loadJsonFile = require('load-json-file');
 const moment = require('moment-timezone');
 
 const CronWorker = require('./CronWorker');
-const HeosAlarmClock = require('./HeosAlarmClock');
+const HeosMediaPlayer = require('./HeosMediaPlayer');
+const readConfigurationFile = require('./utils').readConfigurationFile;
 
-const CONFIGURATION_FILE = process.env.CONFIGURATION_FILE || './configuration.json';
-const CONFIGURATION_CHECK_CRONTAB = process.env.CONFIGURATION_CHECK_CRONTAB || '* * * * * *'
+const CONFIGURATION_CHECK_CRONTAB = process.env.CONFIGURATION_CHECK_CRONTAB || '0 * * * * *';
+const TIMEZONE = process.env.TIMEZONE || 'UTC';
 
 async function startHeosAlarm() {
-  const now = moment();
-  const configuration = await loadJsonFile(CONFIGURATION_FILE);
+  const now = moment().tz(TIMEZONE);
+  const configuration = await readConfigurationFile();
 
   if (configuration) {
     if (configuration.exceptions && Array.isArray(configuration.exceptions)) {
-      const exception = configuration.exceptions.find(exception => exception.day === now.date() && exception.month === now.month() - 1);
+      const exception = configuration.exceptions.find(exception => exception.day === now.date() && exception.month === now.month() + 1);
 
       if (exception) {
         logger.info({
@@ -25,7 +25,7 @@ async function startHeosAlarm() {
     }
 
     if (configuration.heos) {
-      const heosAlarmClock = new HeosAlarmClock(
+      const heosAlarmClock = new HeosMediaPlayer(
         {
           ipAddress: configuration.heos.ipAddress,
           playerId: configuration.heos.playerId,
@@ -40,11 +40,15 @@ async function startHeosAlarm() {
 }
 
 async function initialize() {
-  const cronWorker = new CronWorker({
-    configurationCheckCrontab: CONFIGURATION_CHECK_CRONTAB,
-    configurationFile: CONFIGURATION_FILE,
-    alarmCallback: startHeosAlarm
-  });
+  const configuration = await readConfigurationFile();
+
+  if (configuration && configuration.cron) {
+    new CronWorker({
+      configurationCheckCrontab: CONFIGURATION_CHECK_CRONTAB,
+      customName: Object.keys(configuration.cron).shift(),
+      customCallback: startHeosAlarm
+    });
+  }
 }
 
 module.exports = initialize();
