@@ -48,6 +48,13 @@ async function initialize() {
       customCallback: startHeosAlarm,
       logger: Logger({source: CronWorker.name})
     });
+
+    process.on('uncaughtException', (err, origin) => logger.error(err, origin));
+    process.on('unhandledRejection', (reason, promise) => logger.error(reason, promise));
+    process.on('warning', (warning) => logger.warning(warning));
+  } else {
+    logger.info('Custom crontabs not defined or configuration file missing');
+    process.exit(0);
   }
 }
 
