@@ -1,52 +1,66 @@
-const moment = require('moment-timezone');
-
-const DEFAULT_TIMEZONE = 'UTC';
+const DEFAULT_MESSAGE_SEPARATOR = ', '
+const FUNCTION = 'function';
 
 class Logger {
-  constructor({debug, info, warning, error, timezone}) {
+  constructor({source, debug, info, warn, error, messageSeparator, customFormatter}) {
+    this.source = source;
     this.loggers = {
       debug: debug,
       info: info,
-      warning: warning,
+      warn: warn,
       error: error
     }
-    this.timezone = timezone || DEFAULT_TIMEZONE;
+    this.messageSeparator = messageSeparator || DEFAULT_MESSAGE_SEPARATOR;
+    this.customFormatter = customFormatter;
   }
 
-  _formatMessage({level, source, message}) {
-    return `[${moment().tz(this.timezone).toISOString(true)}: ${level.toUpperCase()}/${source}] ${message}`;
+  _getISOTimestampWithLocalTimezoneApplied() {
+    const date = new Date();
+    date.setTime(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+    return date.toISOString();
   }
 
-  debug({source, message}) {
-    this.loggers.debug && this.loggers.debug(this._formatMessage({
-      level: this.debug.name,
-      source,
-      message
-    }));
+  _formatMessage({level, message}) {
+    return this.customFormatter &&  typeof this.customFormatter === FUNCTION ?
+      this.customFormatter({level, message}) :
+      `[${this._getISOTimestampWithLocalTimezoneApplied()}: ${level.toUpperCase()}/${this.source}] ${message}`;
   }
 
-  info({source, message}) {
-    this.loggers.info && this.loggers.info(this._formatMessage({
-      level: this.info.name,
-      source,
-      message
-    }));
+  _log({logger, messages}) {
+    logger && typeof logger === FUNCTION && logger(
+      this._formatMessage({
+        level: logger.name,
+        message: messages.join(this.messageSeparator)
+      })
+    );
   }
 
-  warning({source, message}) {
-    this.loggers.warning && this.loggers.warning(this._formatMessage({
-      level: this.warning.name,
-      source,
-      message
-    }));
+  debug(...messages) {
+    this._log({
+      logger: this.loggers.debug,
+      messages: messages
+    });
   }
 
-  error({source, message}) {
-    this.loggers.error && this.loggers.error(this._formatMessage({
-      level: this.error.name,
-      source,
-      message
-    }));
+  info(...messages) {
+    this._log({
+      logger: this.loggers.info,
+      messages: messages
+    });
+  }
+
+  warn(...messages) {
+    this._log({
+      logger: this.loggers.warn,
+      messages: messages
+    });
+  }
+
+  error(...messages) {
+    this._log({
+      logger: this.loggers.error,
+      messages: messages
+    });
   }
 }
 

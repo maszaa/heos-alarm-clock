@@ -1,16 +1,16 @@
 const heos = require('heos-api');
 
-const logger = require('./logging');
-
-const COMMAND_GROUP = 'browse';
-const COMMAND = 'play_stream';
-const SUCCESS_STRING = 'success';
+const HEOS_COMMAND_GROUP = 'browse';
+const HEOS_COMMAND = 'play_stream';
+const HEOS_SUCCESS_STRING = 'success';
+const OBJECT = 'object';
 
 class HeosMediaPlayer {
-  constructor({ipAddress, playerId, mediaUrl}) {
+  constructor({ipAddress, playerId, mediaUrl, logger}) {
     this.ipAddress = ipAddress
     this.playerId = playerId;
     this.mediaUrl = mediaUrl;
+    this.logger = logger && typeof logger === OBJECT ? logger : () => {};
     this.connection = null;
 
     this._handlePlayMedia = this._handlePlayMedia.bind(this);
@@ -21,16 +21,10 @@ class HeosMediaPlayer {
     this.connection && await this.connection.close();
     const strResponse = JSON.stringify(response, null, 2);
 
-    if (response && response.heos && response.heos.result && response.heos.result.toLowerCase() === SUCCESS_STRING) {
-      logger.info({
-        source: this.constructor.name,
-        message: `Successfully started playing url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`
-      });
+    if (response && response.heos && response.heos.result && response.heos.result.toLowerCase() === HEOS_SUCCESS_STRING) {
+      this.logger.info(`Successfully started playing url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`);
     } else {
-      logger.error({
-        source: this.constructor.name,
-        message: `Failed to play media url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`
-      });
+      this.logger.error(`Failed to play media url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})\n${strResponse}`);
     }
   }
 
@@ -38,22 +32,19 @@ class HeosMediaPlayer {
     this.connection = await heos.connect(this.ipAddress);
     this.connection.once(
       {
-        commandGroup: COMMAND_GROUP,
-        command: COMMAND
+        commandGroup: HEOS_COMMAND_GROUP,
+        command: HEOS_COMMAND
       },
       this._handlePlayMedia
     )
   }
 
   playMedia() {
-    logger.info({
-      source: this.constructor.name,
-      message: `Starting to play url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})`
-    });
+    this.logger.info(`Starting to play url ${this.mediaUrl} with player ${this.ipAddress} (pid: ${this.playerId})`);
 
     this.connection.write(
-      COMMAND_GROUP,
-      COMMAND,
+      HEOS_COMMAND_GROUP,
+      HEOS_COMMAND,
       {
         pid: this.playerId,
         url: this.mediaUrl

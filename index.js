@@ -1,25 +1,23 @@
-const moment = require('moment-timezone');
-
 const CronWorker = require('./CronWorker');
 const HeosMediaPlayer = require('./HeosMediaPlayer');
-const readConfigurationFile = require('./utils').readConfigurationFile;
+const Logger = require('./logging');
+const { readConfigurationFile } = require('./utils');
 
 const CONFIGURATION_CHECK_CRONTAB = process.env.CONFIGURATION_CHECK_CRONTAB || '0 * * * * *';
-const TIMEZONE = process.env.TIMEZONE || 'UTC';
+
+const logger = Logger({source: module.filename});
 
 async function startHeosAlarm() {
-  const now = moment().tz(TIMEZONE);
+  const now = new Date();
+
   const configuration = await readConfigurationFile();
 
   if (configuration) {
     if (configuration.exceptions && Array.isArray(configuration.exceptions)) {
-      const exception = configuration.exceptions.find(exception => exception.day === now.date() && exception.month === now.month() + 1);
+      const exception = configuration.exceptions.find(exception => exception.day === now.getDate() && exception.month === now.getMonth() + 1);
 
       if (exception) {
-        logger.info({
-          source: startHeosAlarm.name,
-          message: `Day-of-month ${exception.day} of month ${exception.month} was found in configuration exceptions, not triggering alarm`
-        });
+        logger.info(`Day-of-month ${exception.day} of month ${exception.month} was found in configuration exceptions, not triggering alarm`);
         return;
       }
     }
@@ -29,7 +27,8 @@ async function startHeosAlarm() {
         {
           ipAddress: configuration.heos.ipAddress,
           playerId: configuration.heos.playerId,
-          mediaUrl: configuration.heos.mediaUrl
+          mediaUrl: configuration.heos.mediaUrl,
+          logger: Logger({source: `${HeosMediaPlayer.name}`})
         }
       );
 
@@ -41,12 +40,15 @@ async function startHeosAlarm() {
 
 async function initialize() {
   const configuration = await readConfigurationFile();
+  const customName = Object.keys(configuration.cron).shift();
 
   if (configuration && configuration.cron) {
     new CronWorker({
       configurationCheckCrontab: CONFIGURATION_CHECK_CRONTAB,
-      customName: Object.keys(configuration.cron).shift(),
-      customCallback: startHeosAlarm
+      configurationGetter: readConfigurationFile,
+      customName: customName,
+      customCallback: startHeosAlarm,
+      logger: Logger({source: `${CronWorker.name}-${customName}`})
     });
   }
 }
