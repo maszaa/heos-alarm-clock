@@ -1,4 +1,4 @@
-const DEFAULT_MESSAGE_SEPARATOR = ', '
+const DEFAULT_MESSAGE_SEPARATOR = ' '
 const FUNCTION = 'function';
 
 class Logger {

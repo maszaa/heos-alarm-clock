@@ -40,15 +40,13 @@ async function startHeosAlarm() {
 
 async function initialize() {
   const configuration = await readConfigurationFile();
-  const customName = Object.keys(configuration.cron).shift();
 
   if (configuration && configuration.cron) {
     new CronWorker({
       configurationCheckCrontab: CONFIGURATION_CHECK_CRONTAB,
       configurationGetter: readConfigurationFile,
-      customName: customName,
       customCallback: startHeosAlarm,
-      logger: Logger({source: `${CronWorker.name}-${customName}`})
+      logger: Logger({source: CronWorker.name})
     });
   }
 }
