@@ -44,7 +44,14 @@ class CronWorker {
           this.cronJobs.custom[crontab] = new CronJob(configuration.cron[crontab], this.customCallback);
           this.cronJobs.custom[crontab].start();
 
-          this.logger.info(`Initialized ${crontab} cronjob with crontab`, JSON.stringify(this.cronJobs.custom[crontab].cronTime, null, 2));
+          this.logger.info(
+            `Initialized ${crontab} cronjob with crontab`,
+            JSON.stringify(
+              Object.keys(this.cronJobs.custom[crontab].cronTime).reduce((obj, key) => ({...obj, [key]: this.cronJobs.custom[crontab].cronTime[key]}), {}),
+              null,
+              2
+            )
+          );
         } else {
           this.logger.error('Invalid custom callback', 'typeof this.customCallback === FUNCTION', typeof this.customCallback === FUNCTION, this.customCallback)
         }
