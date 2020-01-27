@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const LOGGER_PATH = process.env.LOGGER_PATH || path.join(__dirname, 'loggers');
+const LOGGER_PATH = process.env.LOGGER_PATH || path.resolve(__dirname, '../loggers');
 const LOGGER_FILE_EXTENSION = process.env.LOGGER_FILE_EXTENSION || 'js';
 const LOGGER_FILE_EXTENSION_SPLITTER = '.';
 
