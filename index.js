@@ -1,5 +1,5 @@
 const CronWorker = require('./CronWorker');
-const HeosMediaPlayer = require('./HeosMediaPlayer');
+const HeosCommandExecutor = require('./HeosCommandExecutor');
 const Logger = require('./logging');
 const { readConfigurationFile } = require('./utils');
 
@@ -23,17 +23,19 @@ async function startHeosAlarm() {
     }
 
     if (configuration.heos) {
-      const heosAlarmClock = new HeosMediaPlayer(
+      const heosAlarmClock = new HeosCommandExecutor(
         {
-          ipAddress: configuration.heos.ipAddress,
-          playerId: configuration.heos.playerId,
-          mediaUrl: configuration.heos.mediaUrl,
-          logger: Logger({source: `${HeosMediaPlayer.name}`})
+          logger: Logger({source: `${HeosCommandExecutor.name}`})
         }
       );
 
-      await heosAlarmClock.setupConnection();
-      heosAlarmClock.playMedia();
+      await heosAlarmClock.setupConnection({
+        ipAddress: configuration.heos.ipAddress
+      });
+      heosAlarmClock.executeCommand({
+        command: configuration.heos.command,
+        payload: configuration.heos.payload
+      });
     }
   }
 }

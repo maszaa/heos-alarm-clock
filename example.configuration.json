@@ -34,7 +34,13 @@
   },
   "heos": {
     "ipAddress": "xxx.yyy.z.vvv",
-    "playerId": 0,
-    "mediaUrl": "https://example.com/stream.mp3"
+    "command": {
+      "commandGroup": "browse",
+      "command": "play_stream"
+    },
+    "payload": {
+      "pid": 0,
+      "url": "https://example.com/stream.mp3"
+    }
   }
 }
