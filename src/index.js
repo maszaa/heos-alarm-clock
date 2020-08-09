@@ -52,7 +52,7 @@ async function initialize() {
     });
 
     process.on('uncaughtException', (err, origin) => logger.error(err, origin));
-    process.on('unhandledRejection', (reason, promise) => logger.error(reason, promise));
+    process.on('unhandledRejection', (reason, promise) => logger.error(reason, JSON.stringify(promise, null, 2)));
     process.on('warning', (warning) => logger.warning(warning));
   } else {
     logger.info('Custom crontabs not defined or configuration file missing');
